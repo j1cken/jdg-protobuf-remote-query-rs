@@ -16,7 +16,7 @@
     limitations under the License.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.jboss.quickstarts.jdg</groupId>
@@ -75,7 +75,7 @@
             </snapshots>
         </pluginRepository>
     </pluginRepositories>
-    
+
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -137,7 +137,8 @@
             </activation>
             <properties>
                 <!-- Defines the main class to be execute when running java -jar command -->
-                <main.class.remote-query>org.jboss.as.quickstarts.datagrid.hotrod.query.AddressBookManager</main.class.remote-query>
+                <main.class.remote-query>org.jboss.as.quickstarts.datagrid.hotrod.query.AddressBookManager
+                </main.class.remote-query>
             </properties>
             <build>
                 <plugins>
@@ -165,7 +166,8 @@
             <id>SnowForecast</id>
             <properties>
                 <!-- Defines the main class to be execute when running java -jar command -->
-                <main.class.remote-query>org.jboss.as.quickstarts.datagrid.hotrod.query.SnowForecast</main.class.remote-query>
+                <main.class.remote-query>org.jboss.as.quickstarts.datagrid.hotrod.query.SnowForecast
+                </main.class.remote-query>
             </properties>
             <build>
                 <plugins>
