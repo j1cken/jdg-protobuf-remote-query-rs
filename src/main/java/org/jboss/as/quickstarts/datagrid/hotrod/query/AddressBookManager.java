@@ -51,7 +51,7 @@ public class AddressBookManager {
 
     @GET
     @Path("/queryPerson")
-    @Produces("text/plain")
+    @Produces("application/json")
     public String getPerson(@DefaultValue("foo") @QueryParam("pattern") String pattern) {
         List list = queryPersonByName(pattern);
         StringBuffer result = new StringBuffer();
@@ -60,6 +60,20 @@ public class AddressBookManager {
         });
         return result.toString();
     }
+
+    @PUT
+    @Path("/createPerson")
+    @Produces("application/json")
+    public String createPerson(@QueryParam("id") int id, @QueryParam("name") String name) {
+        Person person = new Person();
+        person.setId(id);
+        person.setName(name);
+        UUID uuid = UUID.randomUUID();
+        Integer key = Integer.valueOf(uuid.toString());
+        getRemoteCache().put(key, person);
+        return "{ 'key': '" + key + "', 'name':'" + name + "'}";
+    }
+
 
     private static final String SERVER_HOST = "jdg.host";
     private static final String HOTROD_PORT = "jdg.hotrod.port";
