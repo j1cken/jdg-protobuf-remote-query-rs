@@ -168,11 +168,10 @@ public class AddressBookManager {
     }
 
     private List queryPersonByName(String pattern) {
-        String namePattern = readConsole("Enter person name pattern: ");
 
         QueryFactory qf = Search.getQueryFactory(getRemoteCache());
         Query query = qf.from(Person.class)
-                .having("name").like(namePattern)
+                .having("name").like(pattern)
                 .build();
 
         return query.<Person>list();
