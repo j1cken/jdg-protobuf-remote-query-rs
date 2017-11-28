@@ -117,7 +117,7 @@ public class AddressBookManager {
                 .host(host)
                 .port(hotrodPort)
                 .security().authentication()
-                .serverName("RemoteJDG").saslMechanism("DIGEST-MD5").callbackHandler(new LoginHandler("user1", "password".toCharArray(), "ApplicationRealm")).enable()
+                .serverName("jdg-server").saslMechanism("DIGEST-MD5").callbackHandler(new LoginHandler("admin", "admin123".toCharArray(), "ApplicationRealm")).enable()
                 .marshaller(new ProtoStreamMarshaller());  // The Protobuf based marshaller is required for query capabilities
         cacheManager = new RemoteCacheManager(builder.build());
 
