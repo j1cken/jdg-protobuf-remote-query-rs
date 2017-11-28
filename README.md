@@ -28,7 +28,7 @@ oc new-app datagrid71-basic -p CACHE_NAMES=default,preferences,addressbook -p IN
 
 ## set env variables
 ```
-oc env dc protobuf HOTROD_AUTHENTICATION=true CONTAINER_SECURITY_ROLES=admin=ALL CONTAINER_SECURITY_ROLE_MAPPER=identity-role-mapper ADDRESSBOOK_CACHE_SECURITY_AUTHORIZATION_ROLES=admin USERNAME=admin PASSWORD=admin123 ADMIN_GROUP=REST,admin,\_\_\_schema_manager
+oc env dc protobuf HOTROD_AUTHENTICATION=true CONTAINER_SECURITY_ROLES=admin=ALL CONTAINER_SECURITY_ROLE_MAPPER=identity-role-mapper ADDRESSBOOK_CACHE_SECURITY_AUTHORIZATION_ROLES=admin USERNAME=admin PASSWORD=admin123 ADMIN_GROUP=REST,admin,___schema_manager
 ```
 
 ## create and deploy the REST protobuf client
