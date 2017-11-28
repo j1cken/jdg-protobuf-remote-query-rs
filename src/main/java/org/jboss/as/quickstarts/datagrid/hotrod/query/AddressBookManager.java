@@ -52,13 +52,14 @@ import java.util.*;
 @Path("/protobuf")
 public class AddressBookManager {
 
-    @GET("/queryPerson/{pattern}")
+    @GET
+    @Path("/queryPerson/{pattern}")
     @Produces("text/plain")
     public String getPerson(@PathParam("pattern") String pattern) {
         List list = queryPersonByName(pattern);
         StringBuffer result = new StringBuffer();
         list.stream().forEach(p -> {
-            result.append(p.toString())
+            result.append(p.toString());
         });
         return result.toString();
     }
@@ -94,7 +95,11 @@ public class AddressBookManager {
      */
     private RemoteCache<Integer, Object> getRemoteCache() {
         if (remoteCache == null) {
-            init();
+            try {
+                init();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
         return remoteCache;
     }
@@ -102,7 +107,8 @@ public class AddressBookManager {
     public AddressBookManager() throws Exception {
         init();
     }
-    private void init() {
+
+    private void init() throws Exception {
         final String host = jdgProperty(SERVER_HOST);
         final int hotrodPort = Integer.parseInt(jdgProperty(HOTROD_PORT));
         final String cacheName = jdgProperty(CACHE_NAME);  // The name of the address book  cache, as defined in your server config.
@@ -119,7 +125,7 @@ public class AddressBookManager {
         cacheManager = new RemoteCacheManager(builder.build());
 
         remoteCache = cacheManager.getCache(cacheName);
-        if (getRemoteCache() == null) {
+        if (remoteCache == null) {
             throw new RuntimeException("Cache '" + cacheName + "' not found. Please make sure the server is properly configured");
         }
 
@@ -157,7 +163,7 @@ public class AddressBookManager {
 
     private void queryPersonByName() {
         String namePattern = readConsole("Enter person name pattern: ");
-        List results = queryPersonByName(namePattern);
+        List<Person> results = queryPersonByName(namePattern);
         System.out.printf("Found %d matches:\n", results.size());
         for (Person p : results) {
             System.out.println(">> " + p);
