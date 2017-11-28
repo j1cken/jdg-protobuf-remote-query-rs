@@ -22,6 +22,7 @@
     <groupId>org.jboss.quickstarts.jdg</groupId>
     <artifactId>jboss-remote-query-quickstart</artifactId>
     <version>7.1.1.Final-redhat-2</version>
+    <packaging>war</packaging>
     <name>JBoss JDG Quickstart: remote-query</name>
 
     <licenses>
