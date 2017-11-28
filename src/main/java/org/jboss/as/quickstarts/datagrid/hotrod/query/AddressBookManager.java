@@ -68,10 +68,8 @@ public class AddressBookManager {
         Person person = new Person();
         person.setId(id);
         person.setName(name);
-        UUID uuid = UUID.randomUUID();
-        Integer key = Integer.valueOf(uuid.toString());
-        getRemoteCache().put(key, person);
-        return "{ 'key': '" + key + "', 'name':'" + name + "'}";
+        getRemoteCache().put(id, person);
+        return "{ 'id': '" + id + "', 'name':'" + name + "'}";
     }
 
 
