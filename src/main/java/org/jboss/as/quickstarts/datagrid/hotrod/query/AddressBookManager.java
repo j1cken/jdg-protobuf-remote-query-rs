@@ -36,10 +36,7 @@ import org.jboss.as.quickstarts.datagrid.hotrod.query.marshallers.PersonMarshall
 import org.jboss.as.quickstarts.datagrid.hotrod.query.marshallers.PhoneNumberMarshaller;
 import org.jboss.as.quickstarts.datagrid.hotrod.query.marshallers.PhoneTypeMarshaller;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import java.io.*;
 import java.util.*;
 
@@ -53,9 +50,9 @@ import java.util.*;
 public class AddressBookManager {
 
     @GET
-    @Path("/queryPerson/{pattern}")
+    @Path("/queryPerson")
     @Produces("text/plain")
-    public String getPerson(@PathParam("pattern") String pattern) {
+    public String getPerson(@DefaultValue("foo") @QueryParam("pattern") String pattern) {
         List list = queryPersonByName(pattern);
         StringBuffer result = new StringBuffer();
         list.stream().forEach(p -> {
