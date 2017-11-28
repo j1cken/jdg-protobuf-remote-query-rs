@@ -1,220 +1,122 @@
-remote-query: Example Using Remote Query via Hot Rod
-==================================
-Author: Adrian Nistor  
-Level: Intermediate  
-Technologies: Infinispan, Hot Rod, Remote Query, Protostream  
-Summary: The `remote-query` quickstart demonstrates how to query Infinispan cache remotely using the Hot Rod client.  
-Target Product: JDG  
-Product Versions: JDG 7.1.x  
-Source: <https://github.com/infinispan/jdg-quickstart>
+# Credits
 
-What is it?
------------
+Most of this code is derived from the JDG Quickstart _remote-query_. I've just RESTified it.
 
-Hot Rod is a binary TCP client-server protocol used in Red Hat JBoss Data Grid (JDG). The Hot Rod protocol facilitates faster client and server interactions in comparison to other text based protocols and allows clients to make decisions about load balancing, failover and data location operations.
+# How-To
 
-The `remote-query` quickstart demonstrates how to connect remotely to JDG to store, retrieve, remove and query data from cache using the Hot Rod protocol. It contains two sample applications. One is a simple address book manager console application (AddressBookManager) that allows
-you to create, edit and remove Persons, manage a list of phone numbers for each Person, query and print the contents of the data grid, all using the Hot Rod based connector. The second one (SnowForecast) is similar but it focuses on continuous queries and queries with grouping and aggregation.
+## Install [OpenShift CDK](https://developers.redhat.com/products/cdk/overview/)
 
+## create JDG 7.1 image stream
+```
+oc import-image -n openshift openshift/jboss-datagrid71-openshift --from=registry.access.redhat.com/jboss-datagrid-7/datagrid71-openshift --confirm
+```
 
-System requirements
--------------------
+## create JDG 7.1 template
+```
+oc create -n openshift -f jdg71.template
+```
 
-All you need to build this project is Java 8.0 (Java SDK 1.8) or newer, Maven 3.0 or newer.
+## change context
+```
+oc project myproject
+```
 
-The application this project produces is designed to be run on Red Hat JBoss Data Grid 7.1.x
+## create JDG 7.1 deployment
+```
+oc new-app datagrid71-basic -p CACHE_NAMES=default,preferences,addressbook -p INFINISPAN_CONNECTORS=hotrod,rest -p USERNAME=admin -p PASSWORD=admin123 -p APPLICATION_NAME=protobuf
+```
 
- 
-Configure Maven
----------------
+## set env variables
+```
+oc env dc protobuf HOTROD_AUTHENTICATION=true CONTAINER_SECURITY_ROLES=admin=ALL CONTAINER_SECURITY_ROLE_MAPPER=identity-role-mapper ADDRESSBOOK_CACHE_SECURITY_AUTHORIZATION_ROLES=admin USERNAME=admin PASSWORD=admin123 ADMIN_GROUP=REST,admin,\_\_\_schema_manager
+```
 
-If you have not yet done so, you must [Configure Maven](https://github.com/jboss-developer/jboss-developer-shared-resources/blob/master/guides/CONFIGURE_MAVEN.md#configure-maven-to-build-and-deploy-the-quickstarts) before testing the quickstarts.
+## create and deploy the REST protobuf client
+```
+oc new-app openshift/jboss-eap70-openshift~https://github.com/j1cken/jdg-protobuf-remote-query-rs.git
+```
 
+## Curl Tests
+```
+curl -i -XPUT 'http://jdg-protobuf-remote-query-rs-myproject.atmy.localopenshift.cloud/jboss-remote-query-quickstart/rest/protobuf/createPerson?id=1&name=torben'
+curl -i 'http://jdg-protobuf-remote-query-rs-myproject.atmy.localopenshift.cloud/jboss-remote-query-quickstart/rest/protobuf/queryPerson?pattern=tor%25'
+```
 
-Configure JDG
--------------
+> **Hint** %25 is the encoded Wildcard pattern '%' ... so '%25or%25' (encoded equivalent of '%or%') will match both 'Torben' and 'Thorsten'
 
-1. Obtain JDG server distribution on Red Hat's Customer Portal at https://access.redhat.com/jbossnetwork/restricted/listSoftware.html
+```
+╭─torben@f27 ~/development/jboss-datagrid-7.1.1-quickstarts/remote-query  ‹master›
+╰─$ curl -i -XPUT 'http://jdg-protobuf-remote-query-rs-myproject.atmy.localopenshift.cloud/jboss-remote-query-quickstart/rest/protobuf/createPerson?id=1&name=torben'
+HTTP/1.1 200 OK
+X-Powered-By: Undertow/1
+Server: JBoss-EAP/7
+Content-Type: application/json
+Content-Length: 29
+Date: Tue, 28 Nov 2017 20:47:28 GMT
+Set-Cookie: 1685d736bc46b8fba481fc8c85e629e3=29ca7fa37dd4c4f198fa9a852858895a; path=/; HttpOnly
+Cache-control: private
 
-2. Install a JDBC driver into JDG (since JDG includes H2 by default, this step may be skipped for the scope of this example). More information can be found in the DataSource Management chapter of the [Administration and Configuration Guide for JBoss Enterprise Application Platform](https://access.redhat.com/site/documentation/JBoss_Enterprise_Application_Platform) . _NOTE: JDG does not support deploying applications so one cannot install it as a deployment._
+{ 'id': '1', 'name':'torben'}%
+╭─torben@f27 ~/development/jboss-datagrid-7.1.1-quickstarts/remote-query  ‹master›
+╰─$ curl -i -XPUT 'http://jdg-protobuf-remote-query-rs-myproject.atmy.localopenshift.cloud/jboss-remote-query-quickstart/rest/protobuf/createPerson?id=2&name=thorsten'
+HTTP/1.1 200 OK
+X-Powered-By: Undertow/1
+Server: JBoss-EAP/7
+Content-Type: application/json
+Content-Length: 31
+Date: Tue, 28 Nov 2017 20:47:35 GMT
+Set-Cookie: 1685d736bc46b8fba481fc8c85e629e3=29ca7fa37dd4c4f198fa9a852858895a; path=/; HttpOnly
+Cache-control: private
 
-3. This Quickstart uses JDBC to store the cache. To permit this, it's necessary to alter JDG configuration file (`JDG_HOME/standalone/configuration/clustered.xml`) to contain the following definitions:
-   
-* Datasource subsystem definition:
+{ 'id': '2', 'name':'thorsten'}%
+╭─torben@f27 ~/development/jboss-datagrid-7.1.1-quickstarts/remote-query  ‹master›
+╰─$ curl -i 'http://jdg-protobuf-remote-query-rs-myproject.atmy.localopenshift.cloud/jboss-remote-query-quickstart/rest/protobuf/queryPerson?pattern=thorsten'
+HTTP/1.1 200 OK
+X-Powered-By: Undertow/1
+Server: JBoss-EAP/7
+Content-Type: application/json
+Content-Length: 54
+Date: Tue, 28 Nov 2017 20:47:45 GMT
+Set-Cookie: 1685d736bc46b8fba481fc8c85e629e3=29ca7fa37dd4c4f198fa9a852858895a; path=/; HttpOnly
+Cache-control: private
 
-    
-        <subsystem xmlns="urn:jboss:domain:datasources:4.0">
-            <!-- Define this Datasource with jndi name  java:jboss/datasources/ExampleDS -->
-            <datasources>
-                <datasource jndi-name="java:jboss/datasources/ExampleDS" pool-name="ExampleDS" enabled="true" use-java-context="true">
-                    <!-- The connection URL uses H2 Database Engine with in-memory database called test -->
-                    <connection-url>jdbc:h2:mem:test;DB_CLOSE_DELAY=-1</connection-url>
-                    <!-- JDBC driver name -->
-                    <driver>h2</driver>
-                    <!-- Credentials -->
-                    <security>
-                        <user-name>sa</user-name>
-                        <password>sa</password>
-                    </security>
-                </datasource>
-                <!-- Define the JDBC driver called 'h2' -->
-                <drivers>
-                    <driver name="h2" module="com.h2database.h2">
-                        <xa-datasource-class>org.h2.jdbcx.JdbcDataSource</xa-datasource-class>
-                    </driver>
-                </drivers>
-            </datasources>
-        </subsystem>
+Person{id=2, name='thorsten', email='null', phones=[]}%
+╭─torben@f27 ~/development/jboss-datagrid-7.1.1-quickstarts/remote-query  ‹master›
+╰─$ curl -i 'http://jdg-protobuf-remote-query-rs-myproject.atmy.localopenshift.cloud/jboss-remote-query-quickstart/rest/protobuf/queryPerson?pattern=torben'
+HTTP/1.1 200 OK
+X-Powered-By: Undertow/1
+Server: JBoss-EAP/7
+Content-Type: application/json
+Content-Length: 52
+Date: Tue, 28 Nov 2017 20:47:51 GMT
+Set-Cookie: 1685d736bc46b8fba481fc8c85e629e3=29ca7fa37dd4c4f198fa9a852858895a; path=/; HttpOnly
+Cache-control: private
 
-* Infinispan subsystem definition:
+Person{id=1, name='torben', email='null', phones=[]}%
+╭─torben@f27 ~/development/jboss-datagrid-7.1.1-quickstarts/remote-query  ‹master›
+╰─$ curl -i 'http://jdg-protobuf-remote-query-rs-myproject.atmy.localopenshift.cloud/jboss-remote-query-quickstart/rest/protobuf/queryPerson?pattern=%25or%25'
+HTTP/1.1 200 OK
+X-Powered-By: Undertow/1
+Server: JBoss-EAP/7
+Content-Type: application/json
+Content-Length: 106
+Date: Tue, 28 Nov 2017 20:52:34 GMT
+Set-Cookie: 1685d736bc46b8fba481fc8c85e629e3=29ca7fa37dd4c4f198fa9a852858895a; path=/; HttpOnly
+Cache-control: private
 
-        <subsystem xmlns="urn:infinispan:server:core:8.4">
-            <cache-container name="clustered" default-cache="default" statistics="true">
-                <transport lock-timeout="60000"/>
-                <global-state/>
-                <!-- Add a distributed cache named 'addressbook_indexed' -->
-                <distributed-cache name="addressbook_indexed" start="EAGER">
-                    <!-- Define the locking isolation of this cache -->
-                    <locking acquire-timeout="20000" concurrency-level="500" striping="false"/>
-    
-                    <!-- Enable indexing using default configs -->
-                    <indexing index="LOCAL" auto-config="true"/>
-    
-                    <!-- Define the JdbcBinaryCacheStores to point to the ExampleDS previously defined -->
-                    <string-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" passivation="false" preload="false" purge="false">
-                        <!-- specifies information about database table/column names and data types -->
-                        <string-keyed-table prefix="JDG">
-                            <id-column name="id" type="VARCHAR"/>
-                            <data-column name="datum" type="BINARY"/>
-                            <timestamp-column name="version" type="BIGINT"/>
-                        </string-keyed-table>
-                    </string-keyed-jdbc-store>
-                </distributed-cache>
-    
-                <!-- Configure index caches -->
-                <replicated-cache name="LuceneIndexesLocking">
-                    <indexing index="NONE"/>
-                </replicated-cache>
-                <replicated-cache name="LuceneIndexesMetadata">
-                    <indexing index="NONE"/>
-                </replicated-cache>
-                <distributed-cache name="LuceneIndexesData">
-                    <indexing index="NONE"/>
-                </distributed-cache>
-                <!-- End of 'addressbook_indexed' cache definition -->
-    
-                <!-- Add a local cache named 'addressbook' which is not indexed -->
-                <distributed-cache name="addressbook" start="EAGER">
-                    <!-- Define the locking isolation of this cache -->
-                    <locking acquire-timeout="20000" concurrency-level="500" striping="false"/>
-                    <!-- Define the JdbcBinaryCacheStores to point to the ExampleDS previously defined -->
-                    <string-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" passivation="false" preload="false" purge="false">
-                        <!-- specifies information about database table/column names and data types -->
-                        <string-keyed-table prefix="JDG">
-                            <id-column name="id" type="VARCHAR"/>
-                            <data-column name="datum" type="BINARY"/>
-                            <timestamp-column name="version" type="BIGINT"/>
-                        </string-keyed-table>
-                     </string-keyed-jdbc-store>
-                </distributed-cache>
-                <!-- End of 'addressbook' cache definition -->
-                <distributed-cache name="default"/>
-                <distributed-cache name="memcachedCache"/>
-            </cache-container>
-        </subsystem>
+Person{id=2, name='thorsten', email='null', phones=[]}Person{id=1, name='torben', email='null', phones=[]}%
+╭─torben@f27 ~/development/jboss-datagrid-7.1.1-quickstarts/remote-query  ‹master›
+╰─$ curl -i 'http://jdg-protobuf-remote-query-rs-myproject.atmy.localopenshift.cloud/jboss-remote-query-quickstart/rest/protobuf/queryPerson?pattern=tor%25'
+HTTP/1.1 200 OK
+X-Powered-By: Undertow/1
+Server: JBoss-EAP/7
+Content-Type: application/json
+Content-Length: 52
+Date: Tue, 28 Nov 2017 20:52:56 GMT
+Set-Cookie: 1685d736bc46b8fba481fc8c85e629e3=29ca7fa37dd4c4f198fa9a852858895a; path=/; HttpOnly
+Cache-control: private
 
-Start JDG NODES
----------------
-
-1. Open a command line and navigate to the root of the JDG directory.
-2. The following shows the command line to start one of the servers:
-
-        For Linux:   $JDG_HOME/bin/standalone.sh  -c clustered.xml -Djboss.server.log.dir=standalone/logs/server1 -Djboss.node.name=node1 -Djboss.server.data.dir=standalone/data/node1
-        For Windows: %JDG_HOME%\bin\standalone.bat -c clustered.xml -Djboss.server.log.dir=standalone/logs/server1 -Djboss.node.name=node1 -Djboss.server.data.dir=standalone/data/node1
-        
-3. (Optional) In another terminal, start another node by pointing to the same folder and executing:
-        
-        For Linux:    $JDG_HOME/bin/standalone.sh -c clustered.xml -Djboss.server.log.dir=logs/server2 -Djboss.node.name=node2 -Djboss.server.data.dir=data2 -Djboss.socket.binding.port-offset=1000
-        For Windowds: %JDG_HOME%\bin\standalone.bat -c clustered.xml -Djboss.server.log.dir=logs/server2 -Djboss.node.name=node2 -Djboss.server.data.dir=data2 -Djboss.socket.binding.port-offset=1000
-
-
-Build and Run the Quickstart
-----------------------------
-
-_NOTE: The following build command assumes you have configured your Maven user settings. If you have not, you must include Maven setting arguments on the command line. See [Build and Deploy the Quickstarts](../../README.md#build-and-deploy-the-quickstarts) for complete instructions and additional options._
-
-1. Make sure you have started the JDG as described above.
-2. Open a command line and navigate to the root directory of this quickstart.
-3. Type this command to build and deploy the archive:
-
-        mvn clean package 
-                
-4. This will create a file at `target/jboss-remote-query-quickstart.jar`
-
-5. Run the example application in its directory:
-
-        mvn exec:java
-
-This will execute the AddressBookManager application by default. To run the SnowForecast application you will need to activate the SnowForecast profile.
-    
-        mvn exec:java -PSnowForecast
- 
-
-Using the application
----------------------
-Basic usage scenarios can look like this (keyboard actions will be shown to you upon start):
-
-    Available actions:
-     0. Display available actions
-     1. Add person
-     2. Remove person
-     3. Add phone to person
-     4. Remove phone from person
-     5. Query persons by name
-     6. Query persons by phone
-     7. Add memo
-     8. Query memo by author
-     9. Display all cache entries
-    10. Run Ickle query
-    11. Clear cache
-    12. Quit    
-
-        
-Type `12` to exit the application.
-
-Run application with different classpath
-----------------------------------------
-It's possible to run this quickstart with different classpath (other than default created by mvn exec:java).
-To do this, compile quickstart with:
-
-        mvn clean package -Pcustom-classpath -Dclasspath=/custom/classpath/directory
-
-This will create a file at `target/jboss-remote-query-quickstart.jar`.
-Then you can run it with:
-
-        java -jar target/jboss-remote-query-quickstart.jar
-
-Debug the Application
----------------------
-
-If you want to debug the source code or look at the Javadocs of any library in the project, run either of the following commands to pull them into your local repository. The IDE should then detect them.
-
-    mvn dependency:sources
-    mvn dependency:resolve -Dclassifier=javadoc
-
-
-Build and Run the C++ Quickstart
---------------------------------
-
-Install the C++ HotRod client from source or one of the pre-built packages.
-
-Compile and run the quickstart:
-    
-    $ cd src/main/cpp
-    $ mkdir build_linux
-    $ cd build_linux
-    $ cmake ..
-    $ cmake --build .
-    $ ./quickstart [<host>] [<port>]
-
-A menu similar to the Java quickstart will be displayed.
+Person{id=1, name='torben', email='null', phones=[]}%
+╭─torben@f27 ~/development/jboss-datagrid-7.1.1-quickstarts/remote-query  ‹master›
+╰─$
+```
