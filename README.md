@@ -2,6 +2,8 @@
 
 Most of this code is derived from the JDG Quickstart _remote-query_. I've just RESTified it.
 
+REST Service is implemented in [AddressManager](src/main/java/org/jboss/as/quickstarts/datagrid/hotrod/query/AddressBookManager.java)
+
 # How-To
 
 ## Install [OpenShift CDK](https://developers.redhat.com/products/cdk/overview/)
